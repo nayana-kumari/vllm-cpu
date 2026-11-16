@@ -78,6 +78,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     export RUSTUP_HOME=/root/.rustup && \
     export PATH="/root/.cargo/bin:/root/.rustup/bin:$PATH" && \
     cd /tmp/arrow/python && \
+    python -c 'from pathlib import Path; p=Path("pyarrow/table.pxi"); s=p.read_text(); old="""    with nogil:\n        options.unify_schemas = promote_options != "none"\n"""; new="""    options.unify_schemas = promote_options != "none"\n    with nogil:\n"""; assert s.count(old)==1; p.write_text(s.replace(old,new))' && \
     export PYARROW_PARALLEL=4 && \
     export ARROW_BUILD_TYPE=release && \
     uv pip install -r requirements-build.txt && \
@@ -218,7 +219,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,from=rust,source=/root/.rustup,target=/root/.rustup,rw \
     git clone https://github.com/guidance-ai/llguidance.git && \
     cd llguidance && \
-    git checkout s390x-fix-v2  && \
+    git checkout s390x-fix-v2 && \
     uv pip install maturin && \
     python -m maturin build --release --out dist --compatibility linux
 
@@ -264,7 +265,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
      NUMBA_WHL_FILE=$(ls /tmp/numba-wheels/*.whl) && \
      OPENCV_WHL_FILE=$(ls /tmp/opencv-wheels/*.whl) && \
      GUIDANCE_WHL_FILE=$(ls /tmp/guidance-wheels/*.whl) && \
-     uv pip install -v \    
+     CXXFLAGS="-fno-lto" uv pip install -v \   
         $ARROW_WHL_FILE \
         $VISION_WHL_FILE \
         $HF_XET_WHL_FILE \
